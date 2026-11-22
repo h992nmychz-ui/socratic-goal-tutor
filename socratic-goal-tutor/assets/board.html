@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning board</title>
+
+<!-- BOARD DATA: the tutor edits only this block. It must stay valid JSON. Do not write "</" inside any text. -->
+<script type="application/json" id="board-data">
+{
+  "goal": "Say what forwards, futures, calls and puts are, when each makes or loses money, and work out the payoff of each by hand.",
+  "proof": "Explain all four as you would to a friend, then solve four payoff cases you have not seen.",
+  "floor": "One question, 25 minutes",
+  "next": "Call options: the payoff at expiry",
+  "updated": "2026-11-22",
+  "current": "s3",
+  "steps": [
+    { "id": "s1", "title": "Forwards", "detail": "Lock in a price today for a deal later", "kind": "learn", "done": true },
+    { "id": "s2", "title": "Futures", "detail": "The forward that trades on an exchange", "kind": "learn", "done": true },
+    { "id": "s3", "title": "Call options", "detail": "The right to buy. Payoff at expiry", "kind": "learn", "done": false },
+    { "id": "s4", "title": "Put options", "detail": "The right to sell. Protecting shares", "kind": "learn", "done": false },
+    { "id": "s5", "title": "Payoff pictures", "detail": "Draw all four by hand", "kind": "learn", "done": false },
+    { "id": "s6", "title": "Proof", "detail": "Teach-back and four fresh cases", "kind": "proof", "done": false }
+  ],
+  "map": [
+    { "id": "g1", "group": "Forwards and futures", "text": "Say what a forward is, with an example", "done": true },
+    { "id": "g2", "group": "Forwards and futures", "text": "Work out the gain or loss on a forward", "done": true },
+    { "id": "g3", "group": "Forwards and futures", "text": "Say how a future differs from a forward", "done": true },
+    { "id": "g4", "group": "Options", "text": "Say what a call gives you the right to do", "done": false },
+    { "id": "g5", "group": "Options", "text": "Work out a call's payoff at expiry", "done": false },
+    { "id": "g6", "group": "Options", "text": "Say what a put gives you the right to do", "done": false },
+    { "id": "g7", "group": "Options", "text": "Work out a put's payoff at expiry", "done": false },
+    { "id": "g8", "group": "Options", "text": "Say when each of the four makes or loses money", "done": false }
+  ],
+  "slips": [
+    { "text": "Mixes up who has the right and who has the duty in an option", "clean": 1 }
+  ]
+}
+</script>
+<!-- END BOARD DATA -->
+
+<style>
+  :root {
+    --wall: #e6e8eb; --frame: #b9bdc2; --board: #fbfcfb; --line: #dfe3e8;
+    --ink: #1f2a44; --muted: #5b6472; --blue: #1f4fa8; --green: #24803f; --red: #cf332c;
+    --note: #fff27a; --note-done: #d9f2a8; --note-fixed: #ffc977; --note-proof: #ffb3cf; --note-rest: #e3e6ea;
+    --note-ink: #26230f; --note-muted: #5c5630; --shadow: rgba(20, 24, 32, 0.22);
+    --hand: "Marker Felt", "Chalkboard SE", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+    --body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --wall: #101214; --frame: #3a4048; --board: #1c2025; --line: #2e343c;
+      --ink: #e8ebf0; --muted: #9aa3b0; --blue: #8fb4ff; --green: #6fd08a; --red: #ff7b74;
+      --note: #e9db62; --note-done: #b6d688; --note-fixed: #e5ad5f; --note-proof: #e592b3; --note-rest: #aeb4bc;
+      --shadow: rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; padding: 16px; background: var(--wall); color: var(--ink); font: 16px/1.5 var(--body); }
+  .board { max-width: 880px; margin: 0 auto; background: var(--board); border: 8px solid var(--frame); border-radius: 12px; padding: 28px 28px 20px; }
+  .label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  h1 { font: 400 1.65rem/1.25 var(--hand); color: var(--blue); margin: 0 0 10px; text-wrap: balance; }
+  h2 { font: 400 1.35rem/1.2 var(--hand); color: var(--blue); margin: 34px 0 6px; }
+  h3 { font: 400 1.1rem/1.2 var(--hand); color: var(--red); margin: 18px 0 8px; display: inline-block; border-bottom: 2px solid var(--red); padding-bottom: 1px; }
+  p { margin: 0; }
+  .hint { color: var(--muted); font-size: 0.875rem; margin-bottom: 14px; }
+  .proof { max-width: 62ch; }
+  .proof b { color: var(--ink); font-weight: 600; }
+
+  .meters { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 18px 0 0; }
+  .meter { flex: 1 1 220px; min-width: 0; }
+  .meter-top { display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; background: var(--green); border-radius: 4px; }
+
+  .next { display: flex; gap: 10px; align-items: baseline; margin-top: 18px; padding: 10px 14px; border-left: 4px solid var(--red); background: color-mix(in srgb, var(--red) 8%, transparent); border-radius: 0 6px 6px 0; }
+  .next span { font: 400 1rem var(--hand); color: var(--red); white-space: nowrap; }
+
+  .notes { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 26px 20px; }
+  .note { position: relative; min-height: 122px; padding: 14px 14px 12px; background: var(--note); color: var(--note-ink); box-shadow: 2px 4px 7px var(--shadow); transform: rotate(-1.2deg); }
+  .note:nth-child(4n+2) { transform: rotate(0.9deg); }
+  .note:nth-child(4n+3) { transform: rotate(1.4deg); }
+  .note:nth-child(4n+4) { transform: rotate(-0.8deg); }
+  .note::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 12px; background: rgba(0, 0, 0, 0.05); }
+  .note.fixed { background: var(--note-fixed); }
+  .note.proof { background: var(--note-proof); }
+  .note.rest { background: var(--note-rest); }
+  .note.done { background: var(--note-done); }
+  .note .top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8125rem; color: var(--note-muted); font-variant-numeric: tabular-nums; }
+  .note .title { font: 400 1.2rem/1.2 var(--hand); margin: 6px 0 4px; overflow-wrap: anywhere; }
+  .note .detail { font-size: 0.875rem; line-height: 1.35; overflow-wrap: anywhere; }
+  .note.done .detail { padding-right: 36px; }
+  .note .tick { position: absolute; right: 10px; bottom: 8px; width: 30px; height: 30px; }
+  .note.here::after { content: ""; position: absolute; top: -9px; left: 50%; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #ff9a94 0 18%, var(--red) 22%); box-shadow: 1px 2px 3px var(--shadow); }
+  .note .here-label { font: 400 0.8125rem var(--hand); color: #b3261f; letter-spacing: 0.04em; }
+
+  .cando { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .cando li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; max-width: 68ch; }
+  .cando svg { width: 22px; height: 22px; margin-top: 1px; }
+  .cando .box { fill: none; stroke: var(--blue); stroke-width: 2; }
+  .cando .done .box { stroke: var(--green); }
+  .cando .done { color: var(--green); }
+  .check { fill: none; stroke: var(--green); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+  .note .check { stroke: #24803f; stroke-width: 5; }
+
+  .slips { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-width: 68ch; }
+  .slips li { display: flex; justify-content: space-between; gap: 16px; padding: 8px 12px; border: 1px dashed var(--frame); border-radius: 6px; }
+  .slips small { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; margin-top: 34px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 0.875rem; color: var(--muted); }
+  .error { padding: 16px; border: 2px solid var(--red); border-radius: 8px; color: var(--red); font-family: ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }
+  @media (max-width: 520px) { .board { padding: 20px 16px 16px; border-width: 6px; } h1 { font-size: 1.4rem; } }
+</style>
+</head>
+<body>
+<main class="board" id="board"></main>
+
+<script>
+(function () {
+  var root = document.getElementById('board');
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function svg(viewBox, parts) {
+    var s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', viewBox);
+    s.setAttribute('aria-hidden', 'true');
+    parts.forEach(function (p) {
+      var n = document.createElementNS(NS, p[0]);
+      Object.keys(p[1]).forEach(function (k) { n.setAttribute(k, p[1][k]); });
+      s.appendChild(n);
+    });
+    return s;
+  }
+  function meter(name, done, total) {
+    var m = el('div', 'meter');
+    var top = el('div', 'meter-top');
+    top.appendChild(el('span', '', name));
+    top.appendChild(el('span', '', done + ' of ' + total));
+    var bar = el('div', 'bar');
+    var fill = el('i');
+    fill.style.width = (total ? Math.round(100 * done / total) : 0) + '%';
+    bar.appendChild(fill);
+    m.appendChild(top); m.appendChild(bar);
+    return m;
+  }
+  function niceDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return iso || '';
+    var names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return Number(m[3]) + ' ' + names[Number(m[2]) - 1] + ' ' + m[1];
+  }
+
+  var d;
+  try {
+    d = JSON.parse(document.getElementById('board-data').textContent);
+  } catch (e) {
+    root.appendChild(el('div', 'error', 'The board data is not valid JSON, so the board cannot be drawn.\n\n' + e.message));
+    return;
+  }
+
+  var steps = Array.isArray(d.steps) ? d.steps : [];
+  var map = Array.isArray(d.map) ? d.map : [];
+  var slips = Array.isArray(d.slips) ? d.slips : [];
+  var current = d.current;
+  if (!steps.some(function (s) { return s.id === current; })) {
+    var open = steps.filter(function (s) { return !s.done; })[0];
+    current = open ? open.id : null;
+  }
+
+  // Header
+  root.appendChild(el('p', 'label', 'Goal'));
+  root.appendChild(el('h1', '', d.goal || 'No goal set yet'));
+  if (d.proof) {
+    var p = el('p', 'proof');
+    p.appendChild(el('b', '', 'Proof: '));
+    p.appendChild(document.createTextNode(d.proof));
+    root.appendChild(p);
+  }
+  var meters = el('div', 'meters');
+  meters.appendChild(meter('Steps done', steps.filter(function (s) { return s.done; }).length, steps.length));
+  if (map.length) meters.appendChild(meter('Can do', map.filter(function (g) { return g.done; }).length, map.length));
+  root.appendChild(meters);
+  if (d.next) {
+    var nx = el('div', 'next');
+    nx.appendChild(el('span', '', 'Next'));
+    nx.appendChild(el('div', '', d.next));
+    root.appendChild(nx);
+  }
+
+  // Path
+  if (steps.length) {
+    root.appendChild(el('h2', '', 'The path'));
+    var list = el('ol', 'notes');
+    steps.forEach(function (s, i) {
+      var kind = ['fixed', 'proof', 'rest'].indexOf(s.kind) >= 0 ? s.kind : '';
+      var li = el('li', 'note' + (kind ? ' ' + kind : '') + (s.done ? ' done' : '') + (s.id === current ? ' here' : ''));
+      var top = el('div', 'top');
+      top.appendChild(el('span', '', (i + 1) + (s.when ? '  ·  ' + s.when : '')));
+      if (s.id === current) top.appendChild(el('span', 'here-label', 'YOU ARE HERE'));
+      li.appendChild(top);
+      li.appendChild(el('div', 'title', s.title || ''));
+      if (s.detail) li.appendChild(el('div', 'detail', s.detail));
+      if (s.done) {
+        var t = svg('0 0 30 30', [['path', { 'class': 'check', d: 'M5 16 l7 8 l14 -18' }]]);
+        t.setAttribute('class', 'tick');
+        li.appendChild(t);
+      }
+      list.appendChild(li);
+    });
+    root.appendChild(list);
+  }
+
+  // Can-do map
+  if (map.length) {
+    root.appendChild(el('h2', '', 'You will be able to'));
+    root.appendChild(el('p', 'hint', 'Ticked when you have done it on your own.'));
+    var groups = [];
+    map.forEach(function (g) {
+      var name = g.group || '';
+      var last = groups[groups.length - 1];
+      if (!last || last.name !== name) { last = { name: name, items: [] }; groups.push(last); }
+      last.items.push(g);
+    });
+    groups.forEach(function (gr) {
+      if (gr.name) { var wrap = el('div'); wrap.appendChild(el('h3', '', gr.name)); root.appendChild(wrap); }
+      var ul = el('ul', 'cando');
+      gr.items.forEach(function (g) {
+        var li = el('li', g.done ? 'done' : '');
+        var parts = [['rect', { 'class': 'box', x: 3, y: 3, width: 16, height: 16, rx: 2 }]];
+        if (g.done) parts.push(['path', { 'class': 'check', d: 'M5 11 l5 6 l11 -15' }]);
+        li.appendChild(svg('0 0 22 22', parts));
+        li.appendChild(el('span', '', g.text || ''));
+        ul.appendChild(li);
+      });
+      root.appendChild(ul);
+    });
+  }
+
+  // Slips
+  if (slips.length) {
+    root.appendChild(el('h2', '', 'Watch for'));
+    root.appendChild(el('p', 'hint', 'Mistakes that came back. Three clean sessions in a row and one leaves the list.'));
+    var sl = el('ul', 'slips');
+    slips.forEach(function (s) {
+      var li = el('li');
+      li.appendChild(el('span', '', s.text || ''));
+      li.appendChild(el('small', '', 'clean ' + (Number(s.clean) || 0) + ' of 3'));
+      sl.appendChild(li);
+    });
+    root.appendChild(sl);
+  }
+
+  // Footer
+  var f = el('footer');
+  f.appendChild(el('span', '', d.floor ? 'Floor on a bad day: ' + d.floor : ''));
+  f.appendChild(el('span', '', d.updated ? 'Updated ' + niceDate(d.updated) : ''));
+  root.appendChild(f);
+
+  // Opened from disk: reload now and then so new ticks show up, and keep the scroll position.
+  if (location.protocol === 'file:') {
+    try {
+      var y = sessionStorage.getItem('board-scroll');
+      if (y) window.scrollTo(0, Number(y));
+    } catch (e) {}
+    setInterval(function () {
+      if (document.hidden) return;
+      try { sessionStorage.setItem('board-scroll', String(window.scrollY)); } catch (e) {}
+      location.reload();
+    }, 30000);
+  }
+})();
+</script>
+</body>
+</html>
